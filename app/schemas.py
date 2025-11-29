@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
 class PostBase(BaseModel):
@@ -15,13 +15,15 @@ class Post(PostBase):
     id: int
     created_at: datetime
 
-    class Confing: 
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+    }
+
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=6, max_length=64)
 
 
 class UserOut(BaseModel):
@@ -29,5 +31,6 @@ class UserOut(BaseModel):
     email: EmailStr
     created_at: datetime
 
-    class Confing: 
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+    }
