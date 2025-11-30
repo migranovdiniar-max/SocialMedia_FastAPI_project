@@ -19,6 +19,7 @@ def get_posts(db: Session = Depends(get_db),
     # posts = cursor.fetchall()
     # print(posts)
     # ------------------------------------------
+    # posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).all()
     posts = db.query(models.Post).all()
     return posts
 
@@ -35,7 +36,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), curren
     # --------------------------------------------------------
     print(current_user.email)
 
-    new_post = models.Post(**post.model_dump())
+    new_post = models.Post(owner_id=current_user.id, **post.model_dump())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -51,6 +52,10 @@ def get_post(id: int, db: Session = Depends(get_db),
     # post = cursor.fetchone()
     # -----------------------------------------------------
     post = db.query(models.Post).filter(models.Post.id == id).first()
+    
+    # if post.owner_id != current_user.id:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+    #                         detail="Not authorized to perfom request action")
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {id} not found")
@@ -65,14 +70,19 @@ def delete_post(id: int, db: Session = Depends(get_db), current_user: int =
     # deleted_post = cursor.fetchone()
     # conn.commit()
     # ------------------------------------------------------------
-    post = db.query(models.Post).filter(
+    post_query = db.query(models.Post).filter(
         models.Post.id == id
     )
+    post = post_query.first()
 
-    if post.first() == None:
+    if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The post with id {id} does not exist")
 
-    post.delete(synchronize_session=False)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                            detail="Not authorized to perfom request action")
+
+    post_query.delete(synchronize_session=False)
     db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -99,6 +109,10 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
 
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The post with id {id} does not exist")
+
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                            detail="Not authorized to perfom request action")
 
     post_query.update(updated_post.model_dump(), synchronize_session=False)
 
