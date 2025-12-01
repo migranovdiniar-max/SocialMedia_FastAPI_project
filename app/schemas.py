@@ -12,22 +12,6 @@ class PostCreate(PostBase):
     pass
 
 
-class Post(PostBase):
-    id: int
-    created_at: datetime
-    owner_id: int
-
-    model_config = {
-    "from_attributes": True
-    }
-
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=6, max_length=64)
-
-
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -36,6 +20,22 @@ class UserOut(BaseModel):
     model_config = {
     "from_attributes": True
     }
+
+
+class Post(PostBase):
+    id: int
+    created_at: datetime
+    owner_id: int
+    owner: UserOut
+
+    model_config = {
+    "from_attributes": True
+    }
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=6, max_length=64)
 
 
 class UserLogin(BaseModel):
